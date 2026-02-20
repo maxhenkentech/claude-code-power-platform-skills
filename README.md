@@ -57,16 +57,19 @@ This skill covers the deep gotchas. For getting-started guidance (scaffolding, V
 
 ```bash
 git clone https://github.com/maxhenkentech/claude-code-power-platform-skills.git /tmp/pp-skills && \
+mkdir -p ~/.claude/skills && \
 cp -r /tmp/pp-skills/power-apps-code-apps ~/.claude/skills/ && \
 rm -rf /tmp/pp-skills
 ```
 
 Claude will automatically load the skill when you're working on Power Apps Code Apps.
 
+> **Note:** The `mkdir -p ~/.claude/skills` step is required. Without it, if the `skills/` directory doesn't exist yet, `cp -r` will rename the source directory to `~/.claude/skills` instead of copying it inside — and the skill won't be found.
+
 ### Project-level (shared with everyone on the repo)
 
 ```bash
-mkdir -p .claude/skills
+mkdir -p .claude/skills && \
 git clone https://github.com/maxhenkentech/claude-code-power-platform-skills.git /tmp/pp-skills && \
 cp -r /tmp/pp-skills/power-apps-code-apps .claude/skills/ && \
 rm -rf /tmp/pp-skills
@@ -80,6 +83,7 @@ To update an existing install:
 
 ```bash
 git clone https://github.com/maxhenkentech/claude-code-power-platform-skills.git /tmp/pp-skills && \
+mkdir -p ~/.claude/skills && \
 cp -r /tmp/pp-skills/power-apps-code-apps ~/.claude/skills/ && \
 rm -rf /tmp/pp-skills
 ```
@@ -96,7 +100,7 @@ Claude Code skills are loaded automatically when Claude detects relevance from t
 - Rendering PDFs, DOCX, or XLSX files inside a Code App
 - Debugging Dataverse errors, CSP issues, or PAC CLI problems
 
-You can also invoke it directly: `/power-apps-code-apps`
+You can also invoke it directly: `/codeapps`
 
 The skill uses **progressive disclosure** — the core `SKILL.md` (~900 words) loads first, and Claude pulls in the detailed reference files (`dataverse-gotchas.md`, `file-operations.md`, `document-rendering.md`) only when needed for the specific topic.
 
