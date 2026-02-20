@@ -55,6 +55,7 @@ This skill covers the deep gotchas. For getting-started guidance (scaffolding, V
 
 ### Personal (all your projects)
 
+**macOS & Linux**
 ```bash
 git clone https://github.com/maxhenkentech/claude-code-power-platform-skills.git /tmp/pp-skills && \
 mkdir -p ~/.claude/skills && \
@@ -62,12 +63,23 @@ cp -r /tmp/pp-skills/power-apps-code-apps ~/.claude/skills/ && \
 rm -rf /tmp/pp-skills
 ```
 
+**Windows (PowerShell)**
+```powershell
+git clone https://github.com/maxhenkentech/claude-code-power-platform-skills.git "$env:TEMP\pp-skills"
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.claude\skills" | Out-Null
+Copy-Item -Recurse "$env:TEMP\pp-skills\power-apps-code-apps" "$env:USERPROFILE\.claude\skills\"
+Remove-Item -Recurse -Force "$env:TEMP\pp-skills"
+```
+
+**Windows (Git Bash / WSL)** — use the macOS & Linux commands above.
+
 Claude will automatically load the skill when you're working on Power Apps Code Apps.
 
-> **Note:** The `mkdir -p ~/.claude/skills` step is required. Without it, if the `skills/` directory doesn't exist yet, `cp -r` will rename the source directory to `~/.claude/skills` instead of copying it inside — and the skill won't be found.
+> **Note:** The `mkdir -p` / `New-Item -Force` step is required. Without it, if the `skills/` directory doesn't exist yet, `cp -r` / `Copy-Item` will rename the source directory to `~/.claude/skills` instead of copying it inside — and the skill won't be found.
 
 ### Project-level (shared with everyone on the repo)
 
+**macOS & Linux**
 ```bash
 mkdir -p .claude/skills && \
 git clone https://github.com/maxhenkentech/claude-code-power-platform-skills.git /tmp/pp-skills && \
@@ -75,17 +87,34 @@ cp -r /tmp/pp-skills/power-apps-code-apps .claude/skills/ && \
 rm -rf /tmp/pp-skills
 ```
 
+**Windows (PowerShell)**
+```powershell
+New-Item -ItemType Directory -Force ".claude\skills" | Out-Null
+git clone https://github.com/maxhenkentech/claude-code-power-platform-skills.git "$env:TEMP\pp-skills"
+Copy-Item -Recurse "$env:TEMP\pp-skills\power-apps-code-apps" ".claude\skills\"
+Remove-Item -Recurse -Force "$env:TEMP\pp-skills"
+```
+
+**Windows (Git Bash / WSL)** — use the macOS & Linux commands above.
+
 Commit `.claude/skills/power-apps-code-apps/` to your repo — everyone who clones it gets the skill automatically.
 
 ### Keeping it up to date
 
-To update an existing install:
-
+**macOS & Linux**
 ```bash
 git clone https://github.com/maxhenkentech/claude-code-power-platform-skills.git /tmp/pp-skills && \
 mkdir -p ~/.claude/skills && \
 cp -r /tmp/pp-skills/power-apps-code-apps ~/.claude/skills/ && \
 rm -rf /tmp/pp-skills
+```
+
+**Windows (PowerShell)**
+```powershell
+git clone https://github.com/maxhenkentech/claude-code-power-platform-skills.git "$env:TEMP\pp-skills"
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.claude\skills" | Out-Null
+Copy-Item -Recurse "$env:TEMP\pp-skills\power-apps-code-apps" "$env:USERPROFILE\.claude\skills\"
+Remove-Item -Recurse -Force "$env:TEMP\pp-skills"
 ```
 
 ---
