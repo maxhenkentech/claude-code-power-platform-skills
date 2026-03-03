@@ -1,6 +1,7 @@
 ---
 name: codeapps
 description: This skill should be used when the user asks to "build a Power Apps Code App", "add a data source to a Code App", "deploy with PAC CLI", "upload files to Dataverse", "download files from Dataverse", "render PDFs in Power Apps", "render documents in Code Apps", "configure CSP for Code Apps", "set up Dataverse CRUD", "fix a PAC CLI error", "initialize a code app project", or mentions pac code, Power Apps Code Apps, or Power Apps SDK. Provides expert guidance for Power Apps Code Apps development using React, TypeScript, and Power Platform connectors.
+version: 1.0.1
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "[task description]"
@@ -9,6 +10,8 @@ argument-hint: "[task description]"
 # Power Apps Code Apps
 
 Power Apps Code Apps are custom web applications hosted inside Power Platform, built with React/TypeScript and the Power Apps SDK. They connect to Power Platform data sources via generated services and communicate with Dataverse through the SDK's internal postMessage bridge — **not** direct HTTP — due to a strict CSP (`connect-src 'none'`) that blocks all `fetch()` and XHR.
+
+> **Direct browser API calls are not supported.** Even if CSP were relaxed, cross-origin `fetch()`/XHR to external REST APIs or third-party services would be blocked by browser CORS policy. Always use **custom connectors** — they route through the Power Platform connector infrastructure, bypassing both CSP and CORS restrictions entirely.
 
 Always read the relevant reference files when working on a topic — they contain complete implementations, critical gotchas, and battle-tested patterns.
 
@@ -127,6 +130,18 @@ await AccountsService.delete(accountId)
 3. Set `NODE_EXTRA_CA_CERTS` environment variable
 4. Restart terminal
 
+**Asset 404 / Blank Screen After Deploy (Relative Path Issue):**
+- Code Apps are served from a subpath on `powerplatformusercontent.com`, not from the domain root
+- Vite's default `base: '/'` produces absolute asset URLs (`/assets/index.js`) that break under this subpath
+- Fix: set `base: './'` in `vite.config.ts` to use relative asset paths
+- Reference assets via `import.meta.env.BASE_URL` or relative imports, never hardcoded `/` paths
+
+**CSP Directive Issues (External Fonts, Images, Scripts, APIs):**
+- The default CSP is strict and blocks most external resources
+- Individual directives (`connect-src`, `frame-src`, `script-src`, `img-src`, `font-src`, etc.) can be relaxed or disabled in the Power Platform Admin Portal
+- Prefer custom connectors over relaxing `connect-src`
+- See `references/file-operations.md` — "Configuring CSP Directives in the Power Platform Admin Portal" for the full directive reference
+
 **Build/Deploy Issues:**
 1. Check auth: `pac auth list`
 2. Verify environment: `pac env who`
@@ -168,5 +183,5 @@ await AccountsService.delete(accountId)
 Load these when working on specific topics:
 
 - **`references/dataverse-gotchas.md`** — PAC CLI version bugs, IOperationResult error handling, lookup column read/write patterns, virtual property filter limitations
-- **`references/file-operations.md`** — CSP constraints explained, complete file upload implementation (3-step block API), complete file download implementation (2-step block API), all critical gotchas
+- **`references/file-operations.md`** — CSP constraints explained (including CORS), complete file upload implementation (3-step block API), complete file download implementation (2-step block API), all critical gotchas, Power Platform Admin Portal CSP directive configuration
 - **`references/document-rendering.md`** — PDF.js main-thread mode for Code Apps, DOCX with mammoth, XLSX with SheetJS, format support matrix, server-side conversion for unsupported formats

@@ -13,6 +13,8 @@ Code Apps run in a sandboxed iframe with a strict Content Security Policy enforc
 
 **The only safe HTTP channel** is the SDK's internal postMessage bridge (`AppHttpClientPlugin.sendHttpAsync`). The parent player frame makes the actual HTTP request outside the iframe's CSP.
 
+**Direct browser API calls to external services are not supported.** Even if `connect-src` were relaxed to permit a domain, the browser would still enforce CORS — and most REST APIs do not include the `Access-Control-Allow-Origin` header required for cross-origin requests from `powerplatformusercontent.com`. Use **custom connectors** to call external APIs: they authenticate via OAuth, run server-side (no CORS), and are fully auditable within Power Platform.
+
 **Consequences for common patterns:**
 - ❌ `fetch()` / `XMLHttpRequest` — always fails (`connect-src 'none'`)
 - ❌ `<iframe src="blobUrl">` — blocked (`frame-src 'self'`, blob: not 'self')
@@ -287,3 +289,40 @@ export async function downloadDataverseFile(
 | `FileSizeInBytes` not `FileSizeCode` | The response field is `FileSizeInBytes`. Check `FileSizeCode`/`filesizecode` as fallbacks |
 | `FileAttributeName` goes in `InitializeFileBlocksDownload` only | Same rule as upload — not valid in `DownloadBlock` |
 | `window.location.origin` is NOT the Dataverse URL | The Code App is hosted on `powerplatformusercontent.com`. Always get `instanceUrl` from `getAppCdsDataSourceConfigsAsync` |
+
+---
+
+## Configuring CSP Directives in the Power Platform Admin Portal
+
+The default CSP applied to Code Apps is strict. When it causes issues — external fonts failing to load, images from third-party domains blocked, or scripts from CDNs rejected — individual directives can be configured per-environment in the Power Platform Admin Portal.
+
+**Navigation:** Power Platform Admin Center → *Environment* → Settings → Product → Privacy + Security → Content Security Policy
+
+Each directive can be set to its platform default, a custom allowlist of sources, or disabled entirely by turning off the default and saving with an empty list (which removes that directive from the CSP header).
+
+### Directive Reference
+
+| Directive | Platform Default | Common Use Case for Customisation |
+|---|---|---|
+| `connect-src` | `'none'` — all fetch/XHR blocked | Add external API domains to permit direct network calls (prefer custom connectors instead — see below) |
+| `frame-ancestors` | Restricts which pages can embed the app | Relax to allow the Code App to be embedded in external portals or SharePoint pages |
+| `frame-src` | `'self'` — external iframes blocked | Add domains to embed third-party content (maps, video players, dashboards) in iframes |
+| `script-src` | `'self' 'unsafe-inline'` | Add CDN domains to load scripts from external sources |
+| `img-src` | `'self' data:` | Add domains to display images hosted on external CDNs or blob storage |
+| `style-src` | `'self' 'unsafe-inline'` | Add Google Fonts CSS, CDN stylesheets, or component library style sources |
+| `font-src` | `'self'` | Add external font hosts (e.g., `fonts.gstatic.com` for Google Fonts) |
+| `worker-src` | `'none'` — Web Workers blocked | Set to `'self'` to enable Web Workers — unblocks PDF.js worker mode and other worker-dependent libraries |
+| `form-action` | Restricts `<form>` submission targets | Add external domains if the app submits HTML forms to external endpoints |
+| `base-uri` | Restricts `<base>` tag href | Rarely needs changing |
+| `child-src` | Inherits from `frame-src`/`worker-src` | Deprecated; prefer `frame-src` and `worker-src` |
+| `default-src` | Fallback for all unspecified directives | Affects every resource type that lacks its own explicit directive |
+| `manifest-src` | Restricts Web App Manifest loading | Customise when using a custom PWA manifest hosted externally |
+| `media-src` | Restricts audio/video sources | Add domains to stream media from external hosting |
+| `object-src` | `'none'` — `<object>`/`<embed>` blocked | Virtually never needed in modern apps |
+
+### Important Guidance
+
+- **Disabling a directive** (turning off default, saving with an empty list) removes it from the CSP header. The browser then applies no restriction for that resource type — use only when there is a clear requirement.
+- **Changes are environment-wide** — they affect all Code Apps deployed to that environment.
+- **Prefer custom connectors over relaxing `connect-src`.** Custom connectors run server-side (no CORS), support OAuth, are subject to DLP policies, and are auditable. Relaxing `connect-src` shifts authentication and data governance out of the platform.
+- **`worker-src: 'self'`** is the most impactful safe change: it unlocks Web Workers, enabling PDF.js's dedicated worker mode (better performance) and other worker-dependent libraries without meaningful security trade-offs for internal apps.
